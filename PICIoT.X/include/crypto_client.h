@@ -33,8 +33,6 @@
 
 #include <stdint.h>
 #include "CryptoAuthenticationLibrary/atca_iface.h"
-#include "../../CryptoAuthenticationLibrary/cryptoauthlib.h"
-
 #include "CryptoAuthenticationLibrary/cryptoauthlib.h"
 #include "winc/driver/winc_adapter.h"
 #include "winc/common/ecc_types.h"

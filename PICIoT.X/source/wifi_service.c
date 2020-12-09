@@ -31,30 +31,27 @@ SOFTWARE.
 #include <stdlib.h>
 #include "clock.h"
 #include <libpic30.h>
-//#include "../application_manager.h"
-// TODO: we probably need this to get correct time for TLS connections
-#include "time_service.h"
 #include "wifi_service.h"
+
+#include "time_service.h"
+#include "drivers/timeout.h"
+#include "debug_print.h"
+#include "conf_winc.h"
+#include "cloud_config.h"
+#include "credentials_storage.h"
+
 #include "winc/m2m/m2m_wifi.h"
 #include "winc/common/winc_defines.h"
 #include "winc/driver/winc_adapter.h"
-//#include "drivers/timeout.h"
-//#include "../cloud/cloud_service.h"
-#include "debug_print.h"
-#include "IoT_Sensor_Node_config.h"
-#include "conf_winc.h"
-//#include "mqtt_config.h"
-#include "cloud_config.h"
-#include "winc/socket/socket.h"
-#include "credentials_storage.h"
-//#include "../led.h"
+#include "winc/common/winc_defines.h"
 #include "winc/m2m/m2m_types.h"
-
-//#include "cloud/mqtt_service.h"
 #include "winc/m2m/m2m_wifi.h"
+#include "winc/socket/socket.h"
 #include "winc/spi_flash/spi_flash.h"
 #include "winc/spi_flash/spi_flash_map.h"
-#include "winc/common/winc_defines.h"
+
+
+#include "IoT_Sensor_Node_config.h"
 #include "cloud_config.h"
 
 
@@ -72,15 +69,22 @@ uint32_t ntpTimeFetchTask(void *payload);
 uint32_t wifiHandlerTask(void * param);
 uint32_t softApConnectTask(void* param);
 
-//timerStruct_t softApConnectTimer = {softApConnectTask};
-//timerStruct_t ntpTimeFetchTimer  = {ntpTimeFetchTask};
-//timerStruct_t wifiHandlerTimer  = {wifiHandlerTask};
+timerStruct_t softApConnectTimer = {softApConnectTask};
+timerStruct_t ntpTimeFetchTimer  = {ntpTimeFetchTask};
+timerStruct_t wifiHandlerTimer  = {wifiHandlerTask};
 	
 uint32_t checkBackTask(void * param);
-//timerStruct_t checkBackTimer  = {checkBackTask};	
-	
+timerStruct_t checkBackTimer  = {checkBackTask};	
+
+shared_networking_params_t shared_networking_params;
+
+#define ENDPOINT_LENGTH 128
+#define CLIENTID_LENGTH 128
+static uint8_t* endpoint;
+static uint8_t* client_id;
+
 static bool responseFromProvisionConnect = false;
-       
+
 void (*callback_funcPtr)(uint8_t);
        
 void enable_provision_ap(void);
@@ -139,7 +143,7 @@ void wifi_init(void (*funcPtr)(uint8_t), uint8_t mode)
     timeout_create(&wifiHandlerTimer, CLOUD_WIFI_TASK_INTERVAL);
 }
 
-void wifi_readThingNameFromWinc(uint8_t* cid, uint8_t thingname_length)
+void wifi_readThingNameFromWinc()
 {
     int8_t status;
     status =  m2m_wifi_download_mode();
@@ -152,20 +156,20 @@ void wifi_readThingNameFromWinc(uint8_t* cid, uint8_t thingname_length)
     {
         debug_printInfo("WINC in download mode");
         		
-	    status = spi_flash_read((uint8_t*)cid, THING_NAME_FLASH_OFFSET,thingname_length);        
-        if(status != M2M_SUCCESS || cid[0] == 0xFF || cid[thingname_length-1] == 0xFF)
+	    status = spi_flash_read(client_id, THING_NAME_FLASH_OFFSET, CLIENTID_LENGTH);        
+        if(status != M2M_SUCCESS || client_id[0] == 0xFF || client_id[CLIENTID_LENGTH - 1] == 0xFF)
         {
-            sprintf(cid, "%s", AWS_THING_NAME); 
+            sprintf((uint8_t) client_id, "%s", AWS_THING_NAME); 
             debug_printIoTAppMsg("Thing Name is not present, error type %d, user defined thing ID is used",status);
         }
         else 
         {
-            debug_printIoTAppMsg("Thing Name read from the device is %s",cid);
+            debug_printIoTAppMsg("Thing Name read from the device is %s",client_id);
         }
     }
 }
 
-void wifi_readAWSEndpointFromWinc(uint8_t* awsEndpoint)
+void wifi_readEndpointFromWinc()
 {
     int8_t status;
     
@@ -179,18 +183,18 @@ void wifi_readAWSEndpointFromWinc(uint8_t* awsEndpoint)
     {        
         debug_printInfo("WINC in download mode");
 
-        status = spi_flash_read((uint8_t*)awsEndpoint, AWS_ENDPOINT_FLASH_OFFSET, AWS_ENDPOINT_LEN);
+        status = spi_flash_read((uint8_t*)endpoint, AWS_ENDPOINT_FLASH_OFFSET, AWS_ENDPOINT_LEN);
         if(status != M2M_SUCCESS )
         {
             debug_printError("Error reading AWS Endpoint from WINC");
         }
-        else if(awsEndpoint[0] == 0xFF)
+        else if(endpoint[0] == 0xFF)
         {
             debug_printIoTAppMsg("AWS Endpoint is not present in WINC, either re-provision or microchip AWS sandbox endpoint will be used");
         }
         else
         {
-            debug_printIoTAppMsg("AWS Endpoint read from WINC is %s",awsEndpoint);  
+            debug_printIoTAppMsg("AWS Endpoint read from WINC is %s",endpoint);  
         }
     }
 }
@@ -359,7 +363,7 @@ static void wifiCallback(uint8_t msgType, const void *pMsg)
         {
             // Now we are really connected, we have AP and we have DHCP, start off the MQTT host lookup now, response in 
 			
-            if (gethostbyname((const char*)awsEndpoint) == M2M_SUCCESS)
+            if (gethostbyname((const char *) endpoint) == M2M_SUCCESS)
             {
                 if (shared_networking_params.amDisconnecting == 1)
                 {

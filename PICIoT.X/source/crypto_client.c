@@ -25,12 +25,12 @@
     SOFTWARE.
 */
 #include <stdio.h>
-#include "../../cryptoauthlib_config.h"
+#include "cryptoauthlib_config.h"
 #include "CryptoAuthenticationLibrary/jwt/atca_jwt.h"
 #include "CryptoAuthenticationLibrary/basic/atca_basic.h"
 #include "crypto_client.h"
 //#include "cloud_service.h"
-#include "../../CryptoAuth_init.h"
+#include "CryptoAuth_init.h"
 
 #include "CryptoAuthenticationLibrary/cryptoauthlib.h"
 #include "winc/m2m/m2m_ssl.h"

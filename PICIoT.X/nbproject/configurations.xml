@@ -128,6 +128,19 @@
         <itemPath>mcc_generated_files/CryptoAuth_init.h</itemPath>
         <itemPath>mcc_generated_files/cryptoauthlib_config.h</itemPath>
       </logicalFolder>
+      <itemPath>include/IoT_Sensor_Node_config.h</itemPath>
+      <itemPath>include/cloud_config.h</itemPath>
+      <itemPath>include/conf_winc.h</itemPath>
+      <itemPath>include/credentials_storage.h</itemPath>
+      <itemPath>include/crypto_client.h</itemPath>
+      <itemPath>include/debug_print.h</itemPath>
+      <itemPath>include/mqtt_config.h</itemPath>
+      <itemPath>include/mqtt_exchange_buffer.h</itemPath>
+      <itemPath>include/mqtt_packetTransfer_interface.h</itemPath>
+      <itemPath>include/mqtt_winc_adapter.h</itemPath>
+      <itemPath>include/time_service.h</itemPath>
+      <itemPath>include/transport_interface.h</itemPath>
+      <itemPath>include/wifi_service.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -261,6 +274,14 @@
         <itemPath>mcc_generated_files/CryptoAuth_init.c</itemPath>
       </logicalFolder>
       <itemPath>main.c</itemPath>
+      <itemPath>source/credentials_storage.c</itemPath>
+      <itemPath>source/crypto_client.c</itemPath>
+      <itemPath>source/debug_print.c</itemPath>
+      <itemPath>source/mqtt_exchange_buffer.c</itemPath>
+      <itemPath>source/mqtt_packetTransfer_interface.c</itemPath>
+      <itemPath>source/mqtt_winc_adapter.c</itemPath>
+      <itemPath>source/time_service.c</itemPath>
+      <itemPath>source/wifi_service.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -271,6 +292,8 @@
   </logicalFolder>
   <sourceRootList>
     <Elem>mcc_generated_files</Elem>
+    <Elem>include</Elem>
+    <Elem>source</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -425,7 +448,7 @@
       </C30-LD>
       <C30Global>
         <property key="common-include-directories"
-                  value="mcc_generated_files/config;mcc_generated_files/winc;mcc_generated_files/drivers;mcc_generated_files;mcc_generated_files/CryptoAuthenticationLibrary"/>
+                  value="mcc_generated_files/config;mcc_generated_files/winc;mcc_generated_files/drivers;mcc_generated_files;mcc_generated_files/CryptoAuthenticationLibrary;include"/>
         <property key="dual-boot-partition" value="0"/>
         <property key="fast-math" value="false"/>
         <property key="generic-16-bit" value="false"/>
@@ -512,8 +535,6 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-15eff"/>
         <property key="poweroptions.powerenable" value="false"/>
-        <property key="programmerToGoFilePath"
-                  value="C:/Users/C14050/Desktop/Git pic-iot-aws-sensor-node/PICIoT.X/debug/default/PICIoT_ptg"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.preservedataflash" value="false"/>
         <property key="programoptions.preservedataflash.ranges"

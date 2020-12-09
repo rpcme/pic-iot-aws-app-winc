@@ -53,8 +53,6 @@ typedef union
     };
 } shared_networking_params_t;
 
-extern shared_networking_params_t shared_networking_params;
-
 
 // If you pass a callback function in here it will be called when the AP state changes. Pass NULL if you do not want that.
 void wifi_init(void (*funcPtr)(uint8_t), uint8_t  mode);

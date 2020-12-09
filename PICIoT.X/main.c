@@ -21,11 +21,16 @@
     SOFTWARE.
 */
 
+#include "system.h"
+
+
 int main(void)
 {
+    SYSTEM_Initialize();
 
 	while (1)
-	{ 
+	{
+
 	}
    
 	return 0;
