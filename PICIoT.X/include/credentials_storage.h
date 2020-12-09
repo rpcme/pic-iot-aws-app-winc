@@ -29,17 +29,5 @@
 #ifndef CREDENTIALS_STORAGE_H
 #define CREDENTIALS_STORAGE_H
 
-#include "../winc/m2m/m2m_types.h"
-
-#define MAX_NTP_SERVER_LENGTH	20
-
-extern char ssid[M2M_MAX_SSID_LEN];
-extern char pass[M2M_MAX_PSK_LEN];
-extern char authType[2];
-extern char ntpServerName[MAX_NTP_SERVER_LENGTH];
-
-void CREDENTIALS_STORAGE_clearWifiCredentials(void);
-void CREDENTIALS_STORAGE_readNTPServerName(char *serverNameBuffer);
-void CREDENTIALS_STORAGE_writeNTPServerName(char *serverNameBuffer);
 
 #endif /* CREDENTIALS_STORAGE_H */

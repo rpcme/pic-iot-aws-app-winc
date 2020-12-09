@@ -98,6 +98,9 @@ static void wifiCallback(uint8_t msgType, const void *pMsg);
 // This is a workaround to wifi_deinit being broken in the winc, so we can de-init without hanging up
 int8_t winc_hif_deinit(void * arg);
 
+/*
+ * This function needs some work
+ */
 void wifi_reinit()
 {
 	tstrWifiInitParam param ;
@@ -115,6 +118,7 @@ void wifi_reinit()
     winc_adapter_init();
 
     m2m_wifi_init(&param);
+    
     socketInit();
 }
 
@@ -159,7 +163,7 @@ void wifi_readThingNameFromWinc()
 	    status = spi_flash_read(client_id, THING_NAME_FLASH_OFFSET, CLIENTID_LENGTH);        
         if(status != M2M_SUCCESS || client_id[0] == 0xFF || client_id[CLIENTID_LENGTH - 1] == 0xFF)
         {
-            sprintf((uint8_t) client_id, "%s", AWS_THING_NAME); 
+            sprintf((char *) client_id, "%s", AWS_THING_NAME); 
             debug_printIoTAppMsg("Thing Name is not present, error type %d, user defined thing ID is used",status);
         }
         else 
@@ -427,6 +431,18 @@ void enable_provision_ap(void)
    };
    static char gacHttpProvDomainName[] = CFG_WLAN_AP_NAME;
    m2m_wifi_start_provision_mode(&apConfig, gacHttpProvDomainName, 1);
+}
+
+char ssid[M2M_MAX_SSID_LEN];
+char pass[M2M_MAX_PSK_LEN];
+char authType[2];
+char ntpServerName[MAX_NTP_SERVER_LENGTH];
+
+void CREDENTIALS_STORAGE_clearWifiCredentials(void)
+{
+	memset(ssid, 0, sizeof(ssid));
+	memset(pass, 0, sizeof(pass));	
+	memset(authType, 0 ,sizeof(authType));
 }
 
 

@@ -28,19 +28,5 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "credentials_storage.h"
-
-char ssid[M2M_MAX_SSID_LEN];
-char pass[M2M_MAX_PSK_LEN];
-char authType[2];
-char ntpServerName[MAX_NTP_SERVER_LENGTH];
-
-void CREDENTIALS_STORAGE_clearWifiCredentials(void)
-{
-	memset(ssid, 0, sizeof(ssid));
-	memset(pass, 0, sizeof(pass));	
-	memset(authType, 0 ,sizeof(authType));
-}
-
 
 
