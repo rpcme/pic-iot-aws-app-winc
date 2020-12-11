@@ -44,13 +44,13 @@ SOFTWARE.
  * affairs in the WINC code.
  */
 
-#define WIFI_CONFIGURED       ( 1 << 0 )
-#define WIFI_AP_CONNECTED     ( 1 << 1 )
-#define WIFI_STA_CONNECTED    ( 1 << 2 )
-#define WIFI_SOCKET_CONNECTED ( 1 << 3 )
-#define WIFI_DHCP_COMPLETED   ( 1 << 4 )
-#define WIFI_INFO_COMPLETED   ( 1 << 5 )
-#define WIFI_ERROR            ( 1 << 7 )
+#define WIFI_CONFIGURED       0
+#define WIFI_AP_CONNECTED     1
+#define WIFI_STA_CONNECTED    2
+#define WIFI_SOCKET_CONNECTED 3
+#define WIFI_DHCP_COMPLETED   4
+#define WIFI_INFO_COMPLETED   5
+#define WIFI_ERROR            7
 
 /*
  * These are bit settings on a uint8_t field
@@ -58,11 +58,12 @@ SOFTWARE.
  * available information
  */
 
-#define NOTF_TIME_AVAILABLE   ( 1 << 0 )
-#define NOTF_CONN_INFO        ( 1 << 1 )
-#define NOTF_PROV_INFO        ( 1 << 2 )
-#define NOTF_CONN_CHANGED     ( 1 << 3 )
-#define NOTF_ERROR            ( 1 << 7 )
+#define NOTF_TIME_AVAILABLE   0
+#define NOTF_CONN_INFO        1
+#define NOTF_PROV_INFO        2
+#define NOTF_CONN_CHANGED     3
+#define NOTF_DHCP_FINISHED    4
+#define NOTF_ERROR            7
 
 typedef union
 {

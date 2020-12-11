@@ -29,8 +29,11 @@ SOFTWARE.
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
+
 #include "clock.h"
 #include <libpic30.h>
+
 #include "wifi_service.h"
 
 #include "time_service.h"
@@ -52,6 +55,9 @@ SOFTWARE.
 
 uint8_t wifi_status = 0;
 uint8_t wifi_notifications = 0;
+void    field8_set(uint8_t *field, uint8_t key, uint8_t value);
+uint8_t field8_get(uint8_t *field, uint8_t key);
+uint8_t field8_is(uint8_t *field, uint8_t key, uint8_t value);
 
 //Flash location to read thing Name from winc
 #define THING_NAME_FLASH_OFFSET (M2M_TLS_SERVER_FLASH_OFFSET + M2M_TLS_SERVER_FLASH_SIZE - FLASH_PAGE_SZ) 
@@ -307,59 +313,30 @@ static void wifiCallback(uint8_t msgType, const void *pMsg)
             tstrM2mWifiStateChanged *pstrWifiState = (tstrM2mWifiStateChanged *)pMsg;
             if (pstrWifiState->u8CurrState == M2M_WIFI_CONNECTED) 
             {
-                
-                if (responseFromProvisionConnect)
-                {
-                    responseFromProvisionConnect = false;
-                    timeout_create(&ntpTimeFetchTimer, CLOUD_NTP_TASK_INTERVAL);	
-                }
-
-                if ((shared_networking_params.amConnectingAP) && (!shared_networking_params.haveAPConnection))
-                {
-                    shared_networking_params.haveAPConnection = 1;
-                    shared_networking_params.amConnectingAP = 0;
-                    shared_networking_params.amDefaultCred = 0;
-                    shared_networking_params.amConnectingSocket = 1;
-                }
-                
-                if (shared_networking_params.amSoftAP)
-                {   
-                    // Connected to AS A SOFT AP
-                    shared_networking_params.amSoftAP = 0;
-                }
-                // We need more than AP to have an APConnection, we also need a DHCP IP address!
+                field8_set(&wifi_status, WIFI_AP_CONNECTED, 1);
+                field8_set(&wifi_notifications, NOTF_CONN_CHANGED, 1);
             } 
             else if (pstrWifiState->u8CurrState == M2M_WIFI_DISCONNECTED) 
             {
-                shared_networking_params.haveAPConnection = 0;
-                shared_networking_params.amConnectingSocket = 0;
-                shared_networking_params.amConnectingAP = 1;
-
-                timeout_create(&checkBackTimer,CLOUD_WIFI_TASK_INTERVAL);
-		        shared_networking_params.amDisconnecting = 1;
+                field8_set(&wifi_status, WIFI_AP_CONNECTED, 0);
+                field8_set(&wifi_status, WIFI_SOCKET_CONNECTED, 0);
+                field8_set(&wifi_notifications, NOTF_CONN_CHANGED, 1);
             }
             
-            if ((wifiConnectionStateChangedCallback != NULL) && (shared_networking_params.amDisconnecting == 0))
+            if ( ( wifiConnectionStateChangedCallback != NULL) &&
+                 ( shared_networking_params.amDisconnecting == 0))
             {
                 wifiConnectionStateChangedCallback(pstrWifiState->u8CurrState);
-            }            
+            }
             break;
         }
         
         case M2M_WIFI_REQ_DHCP_CONF:
         {
-            debug_printInfo("wifiCallback: M2M_WIFI_REQ_DHCP_CONF");
-            // Now we are really connected, we have AP and we have DHCP, start off the MQTT host lookup now, response in 
-			
             if (gethostbyname((const char *) endpoint) == M2M_SUCCESS)
             {
-                if (shared_networking_params.amDisconnecting == 1)
-                {
-                        timeout_delete(&checkBackTimer);
-                        shared_networking_params.amDisconnecting = 0;
-                }
-                shared_networking_params.haveError = 0;
-                debug_printGOOD("CLOUD: DHCP CONF");
+                field8_set(&wifi_notifications, NOTF_DHCP_FINISHED, 1);
+                field8_set(&wifi_status, WIFI_DHCP_COMPLETED, 1);
             }
             break;
         }
@@ -423,25 +400,42 @@ char ntpServerName[MAX_NTP_SERVER_LENGTH];
 
 
 bool WIFI_is_configured(void) {
-    return wifi_status & WIFI_CONFIGURED;
+    return field8_is(&wifi_status, WIFI_CONFIGURED, 1);
 }
 
 bool WIFI_is_ap_connected(void) {
-    return wifi_status & WIFI_AP_CONNECTED;
+    return field8_is(&wifi_status, WIFI_AP_CONNECTED, 1);
 }
 
 bool WIFI_is_socket_connected(void) {
-    return wifi_status & WIFI_SOCKET_CONNECTED;
+    return field8_is(&wifi_status, WIFI_SOCKET_CONNECTED, 1);
 }
 
 bool WIFI_has_notif_conn_info(void) {
-    return wifi_notifications & NOTF_CONN_INFO;
+    return field8_is(&wifi_notifications, NOTF_CONN_INFO, 1);
 }
 
 void WIFI_set_notif_conn_info(bool value) {
-    wifi_notifications = ( ULONG_MAX ^ NOTF_CONN_INFO ) & wifi_notifications;
+    field8_set(&wifi_notifications, NOTF_CONN_INFO, value);
 }
 
 void WIFI_del_notif_conn_info(void) {
-    
+    WIFI_set_notif_conn_info(0);
 }
+
+
+void field8_set(uint8_t *field, uint8_t key, uint8_t value) {
+    if (field8_get(field, key) != value)
+        *field = *field ^ ( 1 << key );
+}
+
+uint8_t field8_get(uint8_t *field, uint8_t key) {
+    return *field & ( 1 << key );
+}
+
+uint8_t field8_is(uint8_t *field, uint8_t key, uint8_t value) {
+    if (field8_get(field, key) == value)
+        return 1;
+    return 0;
+}
+
