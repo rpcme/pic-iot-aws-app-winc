@@ -40,6 +40,13 @@
 uint8_t CRYPTO_CLIENT_printPublicKey(char *s);
 uint8_t CRYPTO_CLIENT_printSerialNumber(char *s);
 void CRYPTO_CLIENT_processEccRequest(tstrEccReqInfo *ecc_request);
+uint8_t CRYPTO_CLIENT_initialize();
+
+uint8_t CRYPTO_CLIENT_serial(char *s);
+uint8_t CRYPTO_CLIENT_certificate(char *s);
+void CRYPTO_CLIENT_print_serial();
+void CRYPTO_CLIENT_print_certificate();
+
 int8_t ecdsa_process_sign_verify_request(uint32_t number_of_signatures);
 int8_t ecdh_derive_key_pair(tstrECPoint *server_public_key);
 int8_t ecdh_derive_client_shared_secret(tstrECPoint *server_public_key, uint8_t *ecdh_shared_secret, tstrECPoint *client_public_key);

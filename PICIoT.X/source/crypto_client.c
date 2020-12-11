@@ -29,13 +29,13 @@
 #include "CryptoAuthenticationLibrary/jwt/atca_jwt.h"
 #include "CryptoAuthenticationLibrary/basic/atca_basic.h"
 #include "crypto_client.h"
-//#include "cloud_service.h"
 #include "CryptoAuth_init.h"
 
 #include "CryptoAuthenticationLibrary/cryptoauthlib.h"
 #include "winc/m2m/m2m_ssl.h"
 #include "winc/common/winc_defines.h"
 #include "debug_print.h"
+#include "crypto/atca_crypto_sw_ecdsa.h"
 
 
 #ifndef ATCA_NO_HEAP
@@ -64,6 +64,15 @@ const uint8_t public_key_x509_header[] = { 0x30, 0x59, 0x30, 0x13, 0x06, 0x07, 0
 0x42, 0x00, 0x04 };
 
 uint8_t g_serial_number[ATCA_SERIAL_NUM_SIZE];
+uint8_t g_certificate[ATCA_ECC_P256_FIELD_SIZE];
+
+void CRYPTO_CLIENT_print_serial() {
+    debug_printInfo("ECC608A serial number: %s", g_serial_number);    
+}
+
+void CRYPTO_CLIENT_print_certificate() {
+    debug_printInfo("ECC608A certificate: %s", g_certificate);
+}
 
 /** \brief custom configuration for an ECCx08A device */
 ATCAIfaceCfg cfg_ateccx08a_i2c_custom = {
@@ -76,8 +85,44 @@ ATCAIfaceCfg cfg_ateccx08a_i2c_custom = {
     .rx_retries             = 20
 };
 
+static uint8_t initialization_status = 0;
+//static uint8_t attDevice
 
-//To do: Move this under Google specific section, once the CLI command "key" is handled
+//void CRYPTO_CLIENT_serial(char* serial) {
+//    serial = (char*) g_serial_number;
+//}
+
+//void CRYPTO_CLIENT_certificate(char* certificate) {
+//    certificate = (char*) g_certificate;
+//}
+
+uint8_t CRYPTO_CLIENT_initialize() {
+    if(!CryptoAuth_Initialize())
+    {
+        initialization_status = 1;
+        return 1;
+    }
+    
+    uint8_t result = CRYPTO_CLIENT_printSerialNumber(g_serial_number);
+    if( result != ATCA_SUCCESS )
+    {
+        //shared_networking_params.haveError = 1;
+        switch(result)
+        {
+            case ATCA_GEN_FAIL:
+                debug_printError("APP: DeviceID generation failed, unspecified error");
+                break;
+            case ATCA_BAD_PARAM:
+                debug_printError("APP: DeviceID generation failed, bad argument");
+            default:
+                debug_printError("APP: DeviceID generation failed");
+                break;
+        }
+        
+    }
+    return 0;
+}
+
 uint8_t CRYPTO_CLIENT_printPublicKey(char *s)
 {
     char buf[128];

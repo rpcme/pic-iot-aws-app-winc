@@ -29,7 +29,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include "debug_print.h"
-
+#include "drivers/uart.h"
 
 static const char *severity_strings[] = {
    CSI_WHITE   "   NONE" CSI_WHITE,
@@ -52,7 +52,7 @@ static char debug_message_prefix[20] = "<PREFIX>";
 void debug_init(const char *prefix)
 { 
    debug_setPrefix(prefix);
-   debug_setSeverity(SEVERITY_NONE);
+   debug_setSeverity(SEVERITY_DEBUG);
 }
 
 void debug_setSeverity(debug_severity_t debug_level)
@@ -67,10 +67,10 @@ void debug_setPrefix(const char *prefix)
 
 void debug_printer(debug_severity_t debug_severity, debug_errorLevel_t error_level, char* format, ...)
 {
-   if(debug_severity >= SEVERITY_NONE && debug_severity <= SEVERITY_DEBUG)
-   {
-      if(debug_severity <= debug_severity_filter)
-      {
+//   if(debug_severity >= SEVERITY_NONE && debug_severity <= SEVERITY_DEBUG)
+//   {
+//      if(debug_severity <= debug_severity_filter)
+//      {
          if(error_level < LEVEL_NORMAL) error_level = LEVEL_NORMAL;
          if(error_level > LEVEL_ERROR) error_level = LEVEL_ERROR;
 
@@ -81,8 +81,8 @@ void debug_printer(debug_severity_t debug_severity, debug_errorLevel_t error_lev
          vprintf(format , argptr);
          va_end(argptr);
          printf(CSI_RESET"\r\n");
-      }
-  }
+//      }
+//  }
 }
 
 

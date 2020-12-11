@@ -43,7 +43,6 @@ typedef struct
 	exchangeBuffer rxbuff;
 } mqttBuffers;
 
-
 void MQTT_ExchangeBufferInit(exchangeBuffer *buffer);
 uint16_t MQTT_ExchangeBufferPeek(exchangeBuffer *buffer, uint8_t *data, uint16_t length);
 uint16_t MQTT_ExchangeBufferWrite(exchangeBuffer *buffer, uint8_t *data, uint16_t length);
