@@ -44,13 +44,13 @@ SOFTWARE.
  * affairs in the WINC code.
  */
 
-#define WIFI_CONFIGURED       0
-#define WIFI_AP_CONNECTED     1
-#define WIFI_STA_CONNECTED    2
-#define WIFI_SOCKET_CONNECTED 3
-#define WIFI_DHCP_COMPLETED   4
-#define WIFI_INFO_COMPLETED   5
-#define WIFI_ERROR            7
+#define WIFI_CONFIGURED        0
+#define WIFI_AP_CONNECTING     1
+#define WIFI_AP_CONNECTED      2
+#define WIFI_SOCKET_CONNECTING 3
+#define WIFI_SOCKET_CONNECTED  4
+#define WIFI_STA_READY         5
+#define WIFI_ERROR             7
 
 /*
  * These are bit settings on a uint8_t field
@@ -65,24 +65,6 @@ SOFTWARE.
 #define NOTF_DHCP_FINISHED    4
 #define NOTF_ERROR            7
 
-typedef union
-{
-    uint8_t allBits;
-    struct
-    {
-        unsigned amDisconnecting :1;           
-        unsigned haveAPConnection :1;
-        unsigned haveError :1;
-        unsigned amConnectingAP : 1;
-        unsigned amConnectingSocket : 1;
-        unsigned amSoftAP: 1;
-        unsigned amDefaultCred : 1;
-        unsigned haveDataConnection : 1;
-    };
-} shared_networking_params_t;
-
-
-// If you pass a callback function in here it will be called when the AP state changes. Pass NULL if you do not want that.
 
 /*
  * Public functions for using the Wi-Fi service.
@@ -101,8 +83,19 @@ void WIFI_invoke_connection_info(void);
 void WIFI_invoke_handle_events(void);
 uint8_t* WIFI_get_ip_address_value(void);
 
+
+/*
+ * These functions provide high level interfaces for creating a socket
+ * connection between the module and the endpoint.
+ */
+
+// The callback should be private
+void WIFI_socket_callback(int8_t sock, uint8_t msgType, void *pMsg);
+
+
 bool WIFI_is_configured(void);
 bool WIFI_is_ap_connected(void);
+bool WIFI_is_ap_connecting(void);
 bool WIFI_is_socket_connected(void);
 
 bool WIFI_has_notif_conn_info(void);
@@ -114,8 +107,8 @@ uint32_t ntpTimeFetchTask(void *payload);
 uint32_t wifiHandlerTask(void * param);
 uint32_t softApConnectTask(void* param);
 
-#include "../winc/m2m/m2m_types.h"
-
+#include "winc/m2m/m2m_types.h"
+#include "winc/socket/socket.h"
 #define MAX_NTP_SERVER_LENGTH	20
 
 extern char authType[2];
@@ -123,5 +116,296 @@ extern char ntpServerName[MAX_NTP_SERVER_LENGTH];
 
 void CREDENTIALS_STORAGE_readNTPServerName(char *serverNameBuffer);
 void CREDENTIALS_STORAGE_writeNTPServerName(char *serverNameBuffer);
+
+typedef struct  
+{
+	uint8_t *start;	
+    uint8_t *currentLocation;
+	uint16_t bufferLength;
+	uint16_t dataLength;
+} exchangeBuffer;
+
+
+typedef struct  
+{
+	exchangeBuffer txbuff;
+	exchangeBuffer rxbuff;
+} mqttBuffers;
+
+void WIFI_ExchangeBufferInit(exchangeBuffer *buffer);
+uint16_t WIFI_ExchangeBufferPeek(exchangeBuffer *buffer, uint8_t *data, uint16_t length);
+uint16_t WIFI_ExchangeBufferWrite(exchangeBuffer *buffer, uint8_t *data, uint16_t length);
+uint16_t WIFI_ExchangeBufferRead(exchangeBuffer *buffer, uint8_t *data, uint16_t length);
+
+
+// THIS WILL NEED TO BE CLEANED UP
+
+#define		BSD_SUCCESS		0
+#define		BSD_ERROR		-1
+
+/************* (END) BSD Generic Defines (END) *****************/
+
+/***************** BSD Type Defined Enumerators **********************/
+// ToDo Check whether this enum can be moved to some other appropriate location
+// This enum currently uses the same values as the TCPIPLite stack
+typedef enum
+{
+	NOT_A_SOCKET = 0,           // This is not a socket
+	SOCKET_CLOSED,              // Socket closed
+	SOCKET_IN_PROGRESS,         // The TCP listen or initiate a connection
+	SOCKET_CONNECTED,           // The TCP is in established state user can send/receive data
+	SOCKET_CLOSING              // The user initiate the closing procedure for this socket
+} socketState_t;
+
+typedef enum
+{
+	PF_UNIX = 0,		
+	PF_LOCAL,
+	PF_INET,		// IPv4
+	PF_INET6,
+	PF_IPX,	
+	PF_NETLINK,		// Kernel UI
+	PF_X25,			
+	PF_AX25,
+	PF_ATMPVC,
+	PF_APPLETALK,
+	PF_PACKET,
+}bsdDomain_t;
+
+typedef enum
+{
+	BSD_SOCK_STREAM = 1,
+	BSD_SOCK_DGRAM,
+	BSD_SOCK_SEQPACKET,
+	BSD_SOCK_RAW,
+	BSD_SOCK_RDM,
+	BSD_SOCK_PACKET,
+}bsdTypes_t;
+
+typedef enum
+{
+	BSD_SO_SSL_BYPASS_X509_VERIF = 1,
+	BSD_SO_SSL_SNI = 2,
+	BSD_SO_SSL_ENABLE_SESSION_CACHING = 3,
+	BSD_SO_SSL_ENABLE_SNI_VALIDATION = 4,
+}wincSupportedSockOptions;
+
+typedef enum
+{
+	BSD_SOL_SOCKET = 1,
+	BSD_SOL_SSL_SOCKET = 2,
+}wincSupportedSockLevel;
+
+/************** (END) BSD Type Defined Enumerators (END) *******************/
+
+/***************** Error Number Defined Enumerators **********************/
+typedef enum
+{
+	ERROR0 = 0,
+	EPERM,
+	ENOENT,
+	ESRCH,
+	EINTR,
+	EIO,
+	ENXIO,
+	E2BIG,
+	ENOEXEC,
+	EBADF,
+	ECHILD,
+	EDEADLK,
+	ENOMEM,
+	EACCES,
+	EFAULT,
+	ENOTBLK,
+	EBUSY,
+	EEXIST,
+	EXDEV,
+	ENODEV,
+	ENOTDIR,
+	EISDIR,
+	EINVAL,
+	ENFILE,
+	EMFILE,
+	ENOTTY,
+	ETXTBSY,
+	EFBIG,
+	ENOSPC,
+	ESPIPE,
+	EROFS,
+	EMLINK,
+	EPIPE,
+	EDOM,				// C99 
+	ERANGE,				// C99 
+	EAGAIN,
+	EINPROGRESS,
+	EALREADY,
+	ENOTSOCK,
+	EDESTADDRREQ,
+	EMSGSIZE,
+	EPROTOTYPE,
+	ENOPROTOOPT,
+	EPROTONOSUPPORT,
+	ESOCKTNOSUPPORT,
+	EOPNOTSUPP,
+	EPFNOSUPPORT,
+	EAFNOSUPPORT,
+	EADDRINUSE,
+	EADDRNOTAVAIL,
+	ENETDOWN,
+	ENETUNREACH,
+	ENETRESET,
+	ECONNABORTED,
+	ECONNRESET,
+	ENOBUFS,
+	EISCONN,
+	ENOTCONN,
+	ESHUTDOWN,
+	ETIMEDOUT,
+	ECONNREFUSED,
+	ELOOP,
+	ENAMETOOLONG,
+	EHOSTDOWN,
+	EHOSTUNREACH,
+	ENOTEMPTY,
+	EPROCLIM,
+	EUSERS,
+	EDQUOT,
+	ESTALE,
+	EBADRPC,
+	ERPCMISMATCH,
+	EPROGUNAVAIL,
+	EPROGMISMATCH,
+	EPROCUNAVAIL,
+	ENOLCK,
+	ENOSYS,
+	EFTYPE,
+	EAUTH,
+	ENEEDAUTH,
+	EIDRM,
+	ENOMSG,
+	EOVERFLOW,
+	ECANCELED,
+	EILSEQ,			// C99 
+	ENOATTR,
+	EDOOFUS,
+	EBADMSG,
+	EMULTIHOP,
+	ENOLINK,
+	EPROTO,
+	ENOTCAPABLE,
+	ECAPMODE,
+	ENOTRECOVERABLE,
+	EOWNERDEAD,
+}bsdErrno_t;
+
+/***************** (END) BSD Type Defined Enumerators (END) **********************/
+
+/***************** BSD Typedefs and Structures **********************/
+
+typedef int socklen_t;
+
+typedef uint16_t sa_family_t;
+
+typedef uint16_t in_port_t;
+
+struct bsd_in_addr{
+	in_addr_t s_addr;
+};
+
+struct bsd_sockaddr{							/* Socket address structure */
+	sa_family_t	sa_family;		/* address family */
+	char		sa_data[14];	/* actually longer; address value */	
+};
+
+struct bsd_sockaddr_in{							/* Socket address internet style */
+	sa_family_t	sin_family;
+	in_port_t	sin_port;
+	struct	bsd_in_addr sin_addr;
+	char	sin_zero[8];
+};
+
+struct pollfd {
+	 int	fd;	  /* file descriptor */
+	 short	events;	  /* events to look for	*/
+	 short	revents;  /* events returned */
+};
+
+/***************** (END) BSD Typedefs and Structures (END) **************************************/
+
+/*********************** BSD Adapter Definitions ********************************/
+/** \brief Function pointer for interaction between the WINC1500 BSD library  
+ * and user application to transfer the information received over a socket to   
+ * the application.
+ **/
+typedef void (*bsdRecvFuncPtr)(uint8_t *data, uint8_t length); 
+
+// The call back table prototype for sending the packet received over a socket
+// to the correct reception handler function defined in the user application.
+// An instance of this table needs to be initialized by the user application to 
+// to specify the recv callback function for each socket. 
+typedef struct
+{
+   int8_t *socket;
+   bsdRecvFuncPtr recvCallBack;
+	socketState_t socketState;
+} packetReceptionHandler_t;
+
+
+/*********************** (END) BSD Adapter definitions (END) **************************/
+
+/***************** BSD Public Functions **************************************/
+void BSD_SetRecvHandlerTable(packetReceptionHandler_t *appRecvInfo);
+
+packetReceptionHandler_t *BSD_GetRecvHandlerTable();
+
+bsdErrno_t BSD_GetErrNo(void);
+
+int BSD_socket(int domain, int type, int protocol);
+
+int BSD_connect(int socket, const struct bsd_sockaddr *name, socklen_t namelen);
+
+int BSD_send(int socket, const void *msg, size_t len, int flags);
+
+int BSD_recv(int socket, const void *msg, size_t len, int flags);
+
+int BSD_close(int socket);
+
+uint32_t BSD_htonl(uint32_t hostlong);
+
+uint16_t BSD_htons(uint16_t hostshort);
+
+uint32_t BSD_ntohl(uint32_t netlong);
+
+uint16_t BSD_ntohs(uint16_t netshort);
+
+int BSD_bind(int socket, const struct bsd_sockaddr *addr, socklen_t addrlen);
+
+int BSD_recvfrom(int socket, void *buf,	size_t len, int flags, struct bsd_sockaddr *from, socklen_t *fromlen);
+
+int BSD_listen(int socket, int backlog);
+
+int BSD_accept(int socket, struct bsd_sockaddr * addr, socklen_t * addrlen);
+
+int BSD_getsockopt(int socket, int level, int optname, void * optval, socklen_t * optlen);
+
+int BSD_setsockopt(int socket, int level, int optname, const void *optval, socklen_t optlen);
+
+int BSD_write(int fd, const void *buf, size_t nbytes);
+
+int BSD_read(int fd, void *buf, size_t nbytes);
+
+int BSD_poll(struct pollfd *ufds, unsigned int nfds, int timeout);
+
+int BSD_sendto(int socket, const void *msg, size_t len,	int flags, const struct bsd_sockaddr *to, socklen_t tolen);
+
+
+// ToDo This is not a true BSD_poll(). The actual BSD_poll() requires a 
+// structures and returns values which are not currently supported by WINC1500.
+socketState_t BSD_GetSocketState(int sock);
+
+packetReceptionHandler_t* getSocketInfo(uint8_t sock);
+
+/************ (END) BSD Public Functions (END) *********************************/
+
 
 #endif /* WIFI_SERVICE_H_ */

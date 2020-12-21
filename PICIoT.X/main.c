@@ -45,22 +45,20 @@ int main(void) {
      * and the Task's state machine entry point would initialize these values
      * using these functions.
      */
-    WIFI_commission_ap_psk((uint8_t*) CFG_MAIN_WLAN_SSID,
-            (uint8_t*) CFG_MAIN_WLAN_PSK);
-    WIFI_provision_endpoint((uint8_t*) CFG_MAIN_ENDPOINT,
-            (uint8_t) CFG_MAIN_PORT);
-
-    WIFI_init(winc_notifier, WIFI_DEFAULT);
-    WIFI_connect_ap_psk((uint8_t) NEW_CREDENTIALS);
 
     while (1) {
-        if (0 == WIFI_is_configured()) {
-            
+        if (! WIFI_is_configured()) {
+            WIFI_commission_ap_psk((uint8_t*) CFG_MAIN_WLAN_SSID,
+                    (uint8_t*) CFG_MAIN_WLAN_PSK);
+            WIFI_provision_endpoint((uint8_t*) CFG_MAIN_ENDPOINT,
+                    (uint8_t) CFG_MAIN_PORT);
+
+            WIFI_init(winc_notifier, WIFI_DEFAULT);
         }
-        else if (0 == WIFI_is_ap_connected()) {
-            WIFI_invoke_connection_info();
+        else if (! WIFI_is_ap_connected() && ! WIFI_is_ap_connecting()) {
+            WIFI_connect_ap_psk((uint8_t) NEW_CREDENTIALS);
         }
-        else if (0 == WIFI_is_socket_connected()) {
+        else if (! WIFI_is_socket_connected() && ! WIFI_is_socket_connecting()) {
             
         }
         else {
@@ -73,37 +71,14 @@ int main(void) {
             WIFI_disconnect_ap_psk();
         }
         
-        if (1 == WIFI_has_notif_conn_info()) {
+        if (WIFI_has_notif_conn_info()) {
             uint8_t* ip = WIFI_get_ip_address_value();
-            printf("IP: %d.%d.%d.%d", ip[0], ip[1], ip[2], ip[3]);
+            printf("IP: %d.%d.%d.%d\n", ip[0], ip[1], ip[2], ip[3]);
             WIFI_del_notif_conn_info();
         }
-
         WIFI_invoke_handle_events();
-        DELAY_milliseconds(100);
+        DELAY_milliseconds(1000);
     }
-
-
-    /*
-     * Connect
-     */
-    debug_printInfo("Create socket connection");
-
-    /*
-     * Send 10 packets
-     */
-
-    /*
-     * Disconnect socket
-     */
-    debug_printInfo("Tear down socket connection");
-
-    /*
-     * Disconnect AP
-     */
-    debug_printInfo("Disconnect from AP");
-
-
     return 0;
 }
 

@@ -4,11 +4,8 @@
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
             <file>file:/home/ANT.AMAZON.COM/elberger/src/pic-iot-aws-app-winc/PICIoT.X/source/wifi_service.c</file>
-            <file>file:/home/ANT.AMAZON.COM/elberger/src/pic-iot-aws-app-winc/PICIoT.X/mcc_generated_files/winc/m2m/m2m_wifi.c</file>
             <file>file:/home/ANT.AMAZON.COM/elberger/src/pic-iot-aws-app-winc/PICIoT.X/include/wifi_service.h</file>
             <file>file:/home/ANT.AMAZON.COM/elberger/src/pic-iot-aws-app-winc/PICIoT.X/main.c</file>
-            <file>file:/home/ANT.AMAZON.COM/elberger/src/pic-iot-aws-app-winc/PICIoT.X/mcc_generated_files/CryptoAuthenticationLibrary/basic/atca_basic_privwrite.c</file>
-            <file>file:/home/ANT.AMAZON.COM/elberger/src/pic-iot-aws-app-winc/PICIoT.X/include/conf_winc.h</file>
         </group>
     </open-files>
 </project-private>
